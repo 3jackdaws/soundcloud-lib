@@ -47,3 +47,12 @@ for track in playlist.tracks:
     write_mp3_to_file(track)
 
 ```
+
+# Bugs or Features
+Please report any and all bugs using the issues tab.
+
+Feel free to suggest new features too.
+
+
+# Contributing
+Sure, submit a pull request.
