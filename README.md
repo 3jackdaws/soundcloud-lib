@@ -9,6 +9,12 @@ I once applied for API access and was approved.  I used this access for months u
 * Fetches and writes mp3 metadata (Album artist, title, artwork)
 * Can fetch entire playlists of tracks
 
+# Installation
+This library is installable as a pip package.
+```
+pip install soundcloud-lib
+```
+
 # How
 This library uses **programming** and **algorithms** to find a client ID that can be used to access the Soundcloud API.  If you want, you can pass your own client ID as the first argument of `SoundcloudAPI()`.
 
