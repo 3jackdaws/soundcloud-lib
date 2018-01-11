@@ -8,6 +8,14 @@ I once applied for API access and was approved.  I used this access for months u
 This library uses **programming** and **algorithms** to find a client ID that can be used to access the Soundcloud API.
 
 ```python
-from sclib import SoundcloudAPI
+from sclib import SoundcloudAPI, Track, Playlist
 
 api = SoundcloudAPI()
+track = api.resolve('https://soundcloud.com/itsmeneedle/sunday-morning')
+
+assert type(track) is Track
+filename = f'./{track.artist} - {track.title}.mp3'
+with open(filename, 'wb+') as fp:
+    track.write_mp3_to(fp)
+
+```
