@@ -100,3 +100,11 @@ def test_fetch_track_by_id_in_order(api:SoundcloudAPI):
         assert track['id'] == TRACK_IDS.pop(0)
 
 
+def test_recognize_weird_tracks(api:SoundcloudAPI):
+
+    track = api.resolve('https://soundcloud.com/nittigritti/lights-nitti-gritti-remix-1')
+
+    print(track.artist)
+    print(track.title)
+
+
