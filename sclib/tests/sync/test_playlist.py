@@ -1,6 +1,6 @@
 import pytest
-from sclib import SoundcloudAPI, Track, Playlist
-from sclib.tests.test_api import api
+
+from sclib import SoundcloudAPI, Playlist
 
 PLAYLIST_URL = 'https://soundcloud.com/chilledcow/sets/hip-hop'
 TEST_PLAYLIST = None

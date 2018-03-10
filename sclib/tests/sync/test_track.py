@@ -1,12 +1,12 @@
-import pytest
-from sclib import SoundcloudAPI, Track
-from sclib.lib import get_300px_album_art_url
-from sclib.tests.test_api import api
-import mutagen
-from urllib.request import urlopen
 import os
 from io import BytesIO
-import sys
+from urllib.request import urlopen
+
+import mutagen
+import pytest
+
+from sclib import SoundcloudAPI, Track, Playlist
+from sclib.lib import get_300px_album_art_url
 
 CLIENT_ID = None
 TEST_TRACK = None
@@ -100,11 +100,30 @@ def test_fetch_track_by_id_in_order(api:SoundcloudAPI):
         assert track['id'] == TRACK_IDS.pop(0)
 
 
-def test_recognize_weird_tracks(api:SoundcloudAPI):
+def test_recognize_edge_case_urls(api:SoundcloudAPI):
+    urls = [
+        'https://soundcloud.com/nittigritti/lights-nitti-gritti-remix-1'
+    ]
+    for url in urls:
+        track = api.resolve(url)
+        file = BytesIO()
+        size = file.__sizeof__()
+        track.write_mp3_to(file)
+        assert file.__sizeof__() > size
 
-    track = api.resolve('https://soundcloud.com/nittigritti/lights-nitti-gritti-remix-1')
 
-    print(track.artist)
-    print(track.title)
+def test_playlist_resolving(api:SoundcloudAPI):
+    client_id = api.client_id
+    print(client_id)
+    api = SoundcloudAPI(client_id)
+    playlists = [
+        'https://soundcloud.com/greg-montilla/sets/download-1'
+    ]
+
+    for playlist in playlists:
+        pl = api.resolve(playlist)  # type: Playlist
+        for track in pl.tracks:
+            print(track.artist, "-", track.title, ":", track.downloadable)
+
 
 
