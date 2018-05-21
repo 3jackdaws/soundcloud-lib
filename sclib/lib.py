@@ -1,4 +1,5 @@
 from urllib.request import urlopen
+from urllib.parse import quote_plus
 import json
 import mutagen
 import sys
@@ -71,6 +72,16 @@ class SoundcloudAPI:
         elif obj['kind'] == 'playlist':
             return Playlist(obj=obj, client=self)
 
+    def search(self, query, limit=20, offset=0):
+        full_url = 'https://api-v2.soundcloud.com/search?q={query}&client_id={client_id}&limit={limit}&offset={offset}'.format(
+            client_id=self.client_id,
+            limit=limit,
+            offset=offset,
+            query=quote_plus(query)
+        )
+        obj = get_obj_from(full_url)
+        return obj['collection']
+
     def get_tracks(self, *track_ids):
         url = 'https://api-v2.soundcloud.com/tracks?ids={track_ids}&client_id={client_id}'.format(
             track_ids=','.join([str(i) for i in track_ids]),
@@ -87,7 +98,6 @@ class Track:
     __slots__ = [
         # Track Attributes
         "artwork_url",
-        "artist",
         "commentable",
         "comment_count",
         "created_at",
@@ -131,6 +141,10 @@ class Track:
         "policy",
         "user",
 
+        #additional attributes
+        "artist",
+        "album",
+
         # Internal Attributes
         "client",
         'ready'
@@ -148,7 +162,7 @@ class Track:
     def clean_attributes(self):
         username = self.user['username']
         title = self.title
-        if "-" in title:
+        if " - " in title:
             parts = title.split("-")
             self.artist = parts[0].strip()
             self.title = parts[-1].strip()
@@ -164,7 +178,7 @@ class Track:
 
             audio = mutagen.File(fp, filename="x.mp3")
             audio.add_tags()
-            audio = set_artist_title(audio, self.artist, self.title)
+            audio = self.set_mp3_attributes(audio)
             audio = embed_artwork(audio, get_300px_album_art_url(self.artwork_url))
             audio.save(fp, v1=2)
             self.ready = True
@@ -195,15 +209,27 @@ class Track:
             )['http_mp3_128_url']
         ).read()
 
+    def set_mp3_attributes(self, audio: mutagen.File):
+        frame = mutagen.id3.TIT2(encoding=3)
+        frame.append(self.title)
+        audio.tags.add(frame)
+        frame = mutagen.id3.TPE1(encoding=3)
+        frame.append(self.artist)
+        audio.tags.add(frame)
+        if self.album:
+            frame = mutagen.id3.TALB(encoding=3)
+            frame.append(self.album)
+            audio.tags.add(frame)
+            print(self.album)
+        return audio
+
     def to_dict(self):
         ignore_attributes = ['client', 'ready']
         track_dict = {}
         for attr in set(self.__slots__):
             if attr not in ignore_attributes:
                 track_dict[attr] = self.__getattribute__(attr)
-
         return track_dict
-
 
 
 class Playlist:

@@ -1,4 +1,3 @@
-from urllib.request import urlopen
 import json
 import mutagen
 import sys
@@ -312,3 +311,12 @@ class Playlist:
         await self.clean_attributes()
         for track in self.tracks:
             yield track
+
+    def to_dict(self):
+        ignore_attributes = ['client']
+        playlist_dict = {}
+        for attr in set(self.__slots__):
+            if attr not in ignore_attributes:
+                playlist_dict[attr] = self.__getattribute__(attr)
+
+        return playlist_dict

@@ -10,13 +10,12 @@ def api():
         return SoundcloudAPI(CLIENT_ID)
     else:
         sc = SoundcloudAPI()
+        sc.get_credentials()
         CLIENT_ID = sc.client_id
         return sc
 
-def test_fetch_client_id():
-    soundcloud = SoundcloudAPI()
-    assert soundcloud.client_id is not None
-    global CLIENT_ID
-    CLIENT_ID = soundcloud.client_id
+def test_fetch_client_id(api):
+    assert api.client_id is not None
+
 
 
