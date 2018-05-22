@@ -1,11 +1,12 @@
 import os
 from io import BytesIO
 from urllib.request import urlopen
+from .test_api import api
 
 import mutagen
 import pytest
 
-from sclib import SoundcloudAPI, Track, Playlist
+from sclib.sync import SoundcloudAPI, Track
 from sclib.lib import get_300px_album_art_url
 
 CLIENT_ID = None
@@ -93,10 +94,11 @@ def test_track_writes_mp3_metadata(test_track:Track):
 
 def test_track_writes_mp3_album():
     api = SoundcloudAPI()
-    track = api.resolve('https://soundcloud.com/if2l/2-months?in=if2l/sets/made-in-abyss-ost')
+    track = api.resolve('https://soundcloud.com/if2l/2-months')
     assert type(track) == Track
     track.album = 'Made in Abyss OST'
     track.artist = 'Kevin Pekin'
+    track.track_no = ":^)"
     with open(f'{track.artist} - {track.title}.mp3', 'wb+') as fp:
         track.write_mp3_to(fp)
 
@@ -123,18 +125,7 @@ def test_recognize_edge_case_urls(api:SoundcloudAPI):
         assert file.__sizeof__() > size
 
 
-def test_playlist_resolving(api:SoundcloudAPI):
-    client_id = api.client_id
-    print(client_id)
-    api = SoundcloudAPI(client_id)
-    playlists = [
-        'https://soundcloud.com/greg-montilla/sets/download-1'
-    ]
 
-    for playlist in playlists:
-        pl = api.resolve(playlist)  # type: Playlist
-        for track in pl.tracks:
-            print(track.artist, "-", track.title, ":", track.downloadable)
 
 
 

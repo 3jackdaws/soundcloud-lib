@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='soundcloud-lib',
-    version='0.3.3',
+    version='0.3.4',
     description='Python Soundcloud API',
     url='https://github.com/3jackdaws/soundcloud-lib',
     author='Ian Murphy',

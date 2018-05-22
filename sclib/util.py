@@ -11,11 +11,7 @@ SCRAPE_URLS = [
 ]
 
 class SoundcloudAPI:
-    __slots__ = [
-        'client_id',
-    ]
-    resolve_url = "https://api-v2.soundcloud.com/resolve?url={url}&client_id={client_id}"
-    search_url  = "https://api-v2.soundcloud.com/search?q={query}&client_id={client_id}&limit={limit}&offset={offset}"
+
 
     def __init__(self):
         pass
@@ -24,10 +20,10 @@ class SoundcloudAPI:
         raise NotImplementedError
 
     def resolve(self, url):
-        return NotImplementedError
+        raise NotImplementedError
 
     def search(self, query):
-        return NotImplementedError
+        raise NotImplementedError
 
 
 
@@ -107,42 +103,7 @@ class Track:
         else:
             self.artist = username
 
-    def write_track_metadata(self, track_fp, album_artwork:bytes):
-        try:
-            audio = mutagen.File(track_fp, filename="x.mp3")
-            audio.add_tags()
 
-        # SET TITLE
-            frame = mutagen.id3.TIT2(encoding=3)
-            frame.append(self.title)
-            audio.tags.add(frame)
-        # SET ARTIST
-            frame = mutagen.id3.TPE1(encoding=3)
-            frame.append(self.artist)
-            audio.tags.add(frame)
-        # SET ARTWORK
-            audio.tags.add(
-                mutagen.id3.APIC(
-                    encoding=3,
-                    mime='image/jpeg',
-                    type=3,
-                    desc=u'Cover',
-                    data=album_artwork
-                )
-            )
-            audio.save(track_fp, v1=2)
-            self.ready = True
-            track_fp.seek(0)
-            return track_fp
-        except (TypeError, ValueError) as e:
-            eprint('File object passed to "write_track_metadata" must be opened in read/write binary ("wb+") mode')
-            raise e
-
-    def write_mp3_to(self, fp):
-        raise NotImplementedError
-
-    def get_stream_url(self):
-        raise NotImplementedError
 
 
 class Playlist:
