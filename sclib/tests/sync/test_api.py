@@ -16,6 +16,7 @@ def api():
 
 def test_fetch_client_id(api):
     assert api.client_id is not None
+    assert len(api.client_id) > 10
 
 
 

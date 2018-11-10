@@ -7,7 +7,7 @@ import mutagen
 import pytest
 
 from sclib.sync import SoundcloudAPI, Track
-from sclib.lib import get_300px_album_art_url
+from sclib.util import get_large_artwork_url
 
 CLIENT_ID = None
 TEST_TRACK = None
@@ -65,6 +65,7 @@ def test_track_accepts_correct_file_objects(api):
             track.write_mp3_to(fp)
     except ValueError:
         pass
+    os.remove(filename)
 
     file = BytesIO()
     track.write_mp3_to(file)
@@ -87,7 +88,7 @@ def test_track_writes_mp3_metadata(test_track:Track):
     # Check Cover Art
     cover_art = tags['APIC:Cover']  # type: mutagen.id3.APIC
     cover_art_data_actual = cover_art.data
-    cover_art_data_expected = urlopen(get_300px_album_art_url(test_track.artwork_url)).read()
+    cover_art_data_expected = urlopen(get_large_artwork_url(test_track.artwork_url)).read()
     assert cover_art_data_actual == cover_art_data_expected
     os.remove(FILENAME)
 
@@ -107,10 +108,11 @@ def test_track_writes_mp3_album():
 
 
 def test_fetch_track_by_id_in_order(api:SoundcloudAPI):
-    TRACK_IDS = [222509092, 222820656, 221461805, 222398079, 153576776, 289589592, 268448230,]
-    tracks = api.get_tracks(*TRACK_IDS)
-    for track in tracks:
-        assert track['id'] == TRACK_IDS.pop(0)
+    EXPECTED = [ 222820656,  222398079, 153576776, 289589592, 268448230]
+    tracks = api.get_tracks(*EXPECTED)
+    actual = [t['id'] for t in tracks]
+    assert EXPECTED == actual
+
 
 
 def test_recognize_edge_case_urls(api:SoundcloudAPI):

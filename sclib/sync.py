@@ -22,12 +22,14 @@ def get_obj_from(url):
 
 
 
-class SoundcloudAPI():
+class SoundcloudAPI:
     __slots__ = [
         'client_id',
     ]
     RESOLVE_URL = "https://api-v2.soundcloud.com/resolve?url={url}&client_id={client_id}"
     SEARCH_URL  = "https://api-v2.soundcloud.com/search?q={query}&client_id={client_id}&limit={limit}&offset={offset}"
+    STREAM_URL  = "https://api.soundcloud.com/i1/tracks/{track_id}/streams?client_id={client_id}"
+    TRACKS_URL  = "https://api-v2.soundcloud.com/tracks?ids={track_ids}&client_id={client_id}"
 
     def __init__(self, client_id=None):
         if client_id:
@@ -55,11 +57,21 @@ class SoundcloudAPI():
         if obj['kind'] == 'track':
             return Track(obj=obj, client=self)
         elif obj['kind'] == 'playlist':
-            # TODO
-            return Playlist(obj=obj, client=self)
+            playlist = Playlist(obj=obj, client=self)
+            playlist.clean_attributes()
+            return playlist
+
+    def get_tracks(self, *track_ids):
+        url = self.TRACKS_URL.format(
+            track_ids=','.join([str(i) for i in track_ids]),
+            client_id=self.client_id
+        )
+        tracks = get_obj_from(url)
+        tracks = sorted(tracks, key=lambda x: track_ids.index(x['id']))
+        return tracks
 
 
-class Track(util.Track):
+class Track:
     __slots__ = [
         # Track Attributes
         "artwork_url",
@@ -119,15 +131,13 @@ class Track(util.Track):
     def __init__(self, *, obj=None, client=None):
         if not obj:
             raise ValueError("[Track]: obj must not be None")
-        if type(client) is not SoundcloudAPI:
-            raise ValueError("[Track]: client must be an instance of SoundcloudAPI")
-
-        self.client = client
+        if not isinstance(client, SoundcloudAPI):
+            raise ValueError(f"[Track]: client must be an instance of SoundcloudAPI not {type(client)}")
 
         for key in self.__slots__:
-            if key in obj:
-                self.__setattr__(key, obj[key])
+            self.__setattr__(key, obj[key] if key in obj else None)
 
+        self.client = client
         self.clean_attributes()
 
     def clean_attributes(self):
@@ -139,8 +149,6 @@ class Track(util.Track):
             self.title = "-".join(parts[1:]).strip()
         else:
             self.artist = username
-
-
 #
 #   Uses urllib
 #
@@ -168,7 +176,7 @@ class Track(util.Track):
 #
     def get_stream_url(self):
         return get_obj_from(
-            self.stream_url.format(
+            self.STREAM_URL.format(
                 track_id=self.id,
                 client_id=self.client.client_id
             )
@@ -194,7 +202,7 @@ class Track(util.Track):
                 frame.append(self.album)
                 audio.tags.add(frame)
         # SET TRACK NO
-            if self.album:
+            if self.track_no:
                 frame = mutagen.id3.TRCK(encoding=3)
                 frame.append(str(self.track_no))
                 audio.tags.add(frame)
@@ -216,16 +224,78 @@ class Track(util.Track):
             util.eprint('File object passed to "write_track_metadata" must be opened in read/write binary ("wb+") mode')
             raise e
 
-    @classmethod
-    def get_tracks(self, *track_ids):
-        url = 'https://api-v2.soundcloud.com/tracks?ids={track_ids}&client_id={client_id}'.format(
-            track_ids=','.join([str(i) for i in track_ids]),
-            client_id=self.client.client_id
-        )
-        tracks = get_obj_from(url)
-        tracks = sorted(tracks, key=lambda x: track_ids.index(x['id']))
-        return tracks
 
 
-class Playlist(util.Playlist):
-    pass
+class Playlist:
+    __slots__ = [
+        "artwork_url",
+        "created_at",
+        "description",
+        "duration",
+        "embeddable_by",
+        "genre",
+        "id",
+        "kind",
+        "label_name",
+        "last_modified",
+        "license",
+        "likes_count",
+        "managed_by_feeds",
+        "permalink",
+        "permalink_url",
+        "public",
+        "purchase_title",
+        "purchase_url",
+        "release_date",
+        "reposts_count",
+        "secret_token",
+        "sharing",
+        "tag_list",
+        "title",
+        "uri",
+        "user_id",
+        "set_type",
+        "is_album",
+        "published_at",
+        "display_date",
+        "user",
+        "tracks",
+        "track_count",
+
+        "client",
+        "ready"
+    ]
+    RESOLVE_THRESHOLD = 100
+
+    def __init__(self, *, obj=None, client=None):
+        assert obj
+        assert "id" in obj
+        for key in self.__slots__:
+            self.__setattr__(key, obj[key] if key in obj else None)
+        self.client = client
+
+    def clean_attributes(self):
+        if self.ready:
+            return
+        self.ready = True
+        track_objects = []  # type: [Track] # all completed track objects
+        incomplete_track_ids = []  # tracks that do not have metadata
+
+        while self.tracks and 'title' in self.tracks[0]:  # remove completed track objects
+            track_objects.append(Track(obj=self.tracks.pop(0), client=self.client))
+
+        while self.tracks:  # while built tracks are less than all tracks
+            incomplete_track_ids.append(self.tracks.pop(0)['id'])
+            if len(incomplete_track_ids) == self.RESOLVE_THRESHOLD or not self.tracks:
+                new_tracks = self.client.get_tracks(*incomplete_track_ids)
+                track_objects.extend([Track(obj=t, client=self.client) for t in new_tracks])
+                incomplete_track_ids.clear()
+        self.tracks = track_objects
+
+    def __len__(self):
+        return int(self.track_count)
+
+    def __iter__(self):
+        self.clean_attributes()
+        for track in self.tracks:
+            yield track

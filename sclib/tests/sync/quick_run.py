@@ -6,7 +6,9 @@ def pretty_print(obj:dict):
 
 
 if __name__ == '__main__':
-    api = SoundcloudAPI()
-    results = api.search('home resonance')
-    for item in results:
-        print(f'{item["title"]} - {item["user"]["username"]}')
+    class A:
+        __slots__ = ['a']
+
+    thing = A()
+    thing.a = 10
+    print(thing.a)

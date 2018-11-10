@@ -2,7 +2,6 @@ import os
 from io import BytesIO
 from urllib.request import urlopen
 
-
 import mutagen
 import pytest
 
@@ -16,7 +15,15 @@ TEST_TRACK_URL = 'https://soundcloud.com/mt-marcy/cold-nights'
 TEST_TRACK_TITLE = 'cold nights'
 TEST_TRACK_ARTIST = 'mt. marcy'
 
+API = None
 
+@pytest.fixture(scope='session')
+def api():
+    global API
+    if not API:
+        API = SoundcloudAPI()
+
+    return API
 
 @pytest.mark.asyncio
 @pytest.fixture()
@@ -72,7 +79,7 @@ async def test_track_accepts_correct_file_objects(api):
     assert file.__sizeof__() > 0
 
 
-@pytest.mark.async
+@pytest.mark.asyncio
 async def test_track_writes_mp3_metadata(test_track:Track):
     FILENAME = 'test_track.mp3'
     with open(FILENAME, 'wb+') as fp:
@@ -94,14 +101,14 @@ async def test_track_writes_mp3_metadata(test_track:Track):
 
 
 
-@pytest.mark.async
+@pytest.mark.asyncio
 async def test_fetch_track_by_id_in_order(api:SoundcloudAPI):
-    TRACK_IDS = [222509092, 222820656, 221461805, 222398079, 153576776, 289589592, 268448230,]
-    tracks = await api.get_tracks(*TRACK_IDS)
-    for track in tracks:
-        assert track['id'] == TRACK_IDS.pop(0)
+    EXPECTED = [222820656, 222398079, 153576776, 289589592, 268448230]
+    tracks = await api.get_tracks(*EXPECTED)
+    actual = [t['id'] for t in tracks]
+    assert EXPECTED == actual
 
-@pytest.mark.async
+@pytest.mark.asyncio
 async def test_recognize_edge_case_urls(api:SoundcloudAPI):
     urls = [
         'https://soundcloud.com/nittigritti/lights-nitti-gritti-remix-1'
@@ -113,7 +120,7 @@ async def test_recognize_edge_case_urls(api:SoundcloudAPI):
         await track.write_mp3_to(file)
         assert file.__sizeof__() > size
 
-@pytest.mark.async
+@pytest.mark.asyncio
 async def test_playlist_resolving(api:SoundcloudAPI):
     playlists = [
         'https://soundcloud.com/greg-montilla/sets/download-1'

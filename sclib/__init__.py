@@ -1,1 +1,1 @@
-from .sync import SoundcloudAPI, Track
+from .sync import SoundcloudAPI, Track, Playlist
