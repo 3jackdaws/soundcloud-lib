@@ -91,6 +91,21 @@ for track in playlist.tracks:
 
 ```
 
+## Write Album Name or Track Number
+```python
+from sclib import SoundcloudAPI, Track, Playlist
+
+playlist = SoundcloudAPI().resolve("https://soundcloud.com/user/sets/playlist_name")
+
+for track_number, track in enumerate(playlist):
+    track.track_no = track_number
+    track.album = playlist.title
+    with open(f"{track.artist} - {track.title}.mp3", "wb+") as file:
+        track.write_mp3_to(file)
+```
+
+
+
 
 
 # Bugs or Features
