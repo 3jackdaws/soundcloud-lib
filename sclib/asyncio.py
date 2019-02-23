@@ -168,7 +168,6 @@ class Playlist(sync.Playlist):
         self.ready = True
 
         track_objects = []  # type: [Track] # all completed track objects
-        num_tracks = len(self.tracks)
         incomplete_track_ids = []   # tracks that do not have metadata
 
         while self.tracks and 'title' in self.tracks[0]:       # remove completed track objects
@@ -180,7 +179,11 @@ class Playlist(sync.Playlist):
                 new_tracks = await self.client.get_tracks(*incomplete_track_ids)
                 track_objects.extend([Track(obj=t, client=self.client) for t in new_tracks])
                 incomplete_track_ids.clear()
-        self.tracks = track_objects
+
+        for track in track_objects:
+            if track not in self.tracks:
+                self.tracks.append(track)
+
 
     def __len__(self):
         return int(self.track_count)
