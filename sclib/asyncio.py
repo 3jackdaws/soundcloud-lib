@@ -112,11 +112,13 @@ class Track(sync.Track):
             fp.write(track_mp3_bytes)
             fp.seek(0)
 
-            album_artwork = await get_resource(
-                util.get_large_artwork_url(
-                    self.artwork_url
+            album_artwork = None
+            if self.artwork_url:
+                album_artwork = await get_resource(
+                    util.get_large_artwork_url(
+                        self.artwork_url
+                    )
                 )
-            )
 
             self.write_track_id3(fp, album_artwork)
         except (TypeError, ValueError) as e:
