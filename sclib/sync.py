@@ -159,11 +159,13 @@ class Track:
             fp.write(urlopen(stream_url).read())
             fp.seek(0)
 
-            album_artwork = urlopen(
-                util.get_large_artwork_url(
-                    self.artwork_url
-                )
-            ).read()
+            album_artwork = None
+            if self.artwork_url:
+                album_artwork = urlopen(
+                    util.get_large_artwork_url(
+                        self.artwork_url
+                    )
+                ).read()
 
             self.write_track_id3(fp, album_artwork)
         except (TypeError, ValueError) as e:
@@ -182,7 +184,7 @@ class Track:
             )
         )['http_mp3_128_url']
 
-    def write_track_id3(self, track_fp, album_artwork:bytes):
+    def write_track_id3(self, track_fp, album_artwork:bytes = None):
         try:
             audio = mutagen.File(track_fp, filename="x.mp3")
             audio.add_tags()
@@ -207,15 +209,16 @@ class Track:
                 frame.append(str(self.track_no))
                 audio.tags.add(frame)
         # SET ARTWORK
-            audio.tags.add(
-                mutagen.id3.APIC(
-                    encoding=3,
-                    mime='image/jpeg',
-                    type=3,
-                    desc=u'Cover',
-                    data=album_artwork
+            if album_artwork:
+                audio.tags.add(
+                    mutagen.id3.APIC(
+                        encoding=3,
+                        mime='image/jpeg',
+                        type=3,
+                        desc=u'Cover',
+                        data=album_artwork
+                    )
                 )
-            )
             audio.save(track_fp, v1=2)
             self.ready = True
             track_fp.seek(0)
