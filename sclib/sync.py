@@ -19,6 +19,7 @@ def get_obj_from(url):
         return False
 
 
+class UnsupportedFormatError(Exception): pass
 
 
 
@@ -30,6 +31,7 @@ class SoundcloudAPI:
     SEARCH_URL  = "https://api-v2.soundcloud.com/search?q={query}&client_id={client_id}&limit={limit}&offset={offset}"
     STREAM_URL  = "https://api.soundcloud.com/i1/tracks/{track_id}/streams?client_id={client_id}"
     TRACKS_URL  = "https://api-v2.soundcloud.com/tracks?ids={track_ids}&client_id={client_id}"
+    PROGRESSIVE_URL = "https://api-v2.soundcloud.com/media/soundcloud:tracks:723290971/53dc4e74-0414-4ab8-8741-a07ac56c787f/stream/progressive?client_id={client_id}"
 
     def __init__(self, client_id=None):
         if client_id:
@@ -54,6 +56,7 @@ class SoundcloudAPI:
         )
 
         obj = get_obj_from(url)
+        # print(json.dumps(obj, indent=2))  # TODO: remove
         if obj['kind'] == 'track':
             return Track(obj=obj, client=self)
         elif obj['kind'] == 'playlist':
@@ -94,6 +97,7 @@ class Track:
         "last_modified",
         "license",
         "likes_count",
+        "media",
         "permalink",
         "permalink_url",
         "playback_count",
@@ -173,16 +177,18 @@ class Track:
             util.eprint(e)
             raise e
 
+    def get_prog_url(self):
+        for transcode in self.media['transcodings']:
+            if transcode['format']['protocol'] == 'progressive':
+                return transcode['url'] + "?client_id=" + self.client.client_id
+        raise UnsupportedFormatError("As of soundcloud-lib 0.5.0, tracks that are not marked as 'Downloadable' cannot be downloaded because this library does not yet assemble HLS streams.")
 #
 #   Uses urllib
 #
     def get_stream_url(self):
-        return get_obj_from(
-            self.STREAM_URL.format(
-                track_id=self.id,
-                client_id=self.client.client_id
-            )
-        )['http_mp3_128_url']
+        prog_url = self.get_prog_url()
+        url_response = get_obj_from(prog_url)
+        return url_response['url']
 
     def write_track_id3(self, track_fp, album_artwork:bytes = None):
         try:

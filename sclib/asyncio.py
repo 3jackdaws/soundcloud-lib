@@ -18,14 +18,10 @@ async def get_resource(url) -> bytes:
 
 async def fetch_soundcloud_client_id():
     url = random.choice(util.SCRAPE_URLS)
-    page = await get_resource(url)
-    dom = BeautifulSoup(page, 'html.parser')
-    scripts = dom.findAll('script', attrs={'src':True})
-    for script in scripts:
-        src = script['src']
-        if 'app' in src.split('/')[-1]:
-            app_script_text = await get_resource(src)
-            return re.findall(r'client_id:"([a-zA-Z0-9]+)"', app_script_text.decode())[0]
+    page_text = await get_resource(url)
+    script_url = util.find_script_url(page_text.decode())
+    script_text = await get_resource(script_url)
+    return util.find_client_id(script_text.decode())
 
 __all__ = [
     "Track",
@@ -127,27 +123,13 @@ class Track(sync.Track):
             raise e
 
     async def get_stream_url(self):
-        url = "https://api.soundcloud.com/i1/tracks/{track_id}/streams?client_id={client_id}".format(
-            track_id=str(self.id),
-            client_id=self.client.client_id
-        )
+        prog_url = self.get_prog_url()
+        stream_response = await get_obj_from(prog_url)
         try:
-            obj = await get_obj_from(url)
-            return obj['http_mp3_128_url']
+            return stream_response['url']
         except Exception as e:
             eprint(e)
             return None
-
-    async def fetch_track_mp3(self):
-        obj = await get_obj_from(
-                "https://api.soundcloud.com/i1/tracks/{track_id}/streams?client_id={client_id}".format(
-                    track_id=self.id,
-                    client_id=self.client.client_id
-                )
-            )
-        return await get_resource(
-            obj['http_mp3_128_url']
-        )
 
     def to_dict(self):
         ignore_attributes = ['client', 'ready']

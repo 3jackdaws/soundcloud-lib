@@ -24,3 +24,5 @@ def find_client_id(script_text):
 
 def get_large_artwork_url(artwork_url):
     return artwork_url.replace('large', 't300x300') if artwork_url else None
+
+
