@@ -15,7 +15,7 @@ def find_script_url(html_text):
     scripts = dom.findAll('script', attrs={'src': True})
     for script in scripts:
         src = script['src']
-        if '49-' in src.split('/')[-1]:
+        if '48-' in src.split('/')[-1]:
             return src
 
 
