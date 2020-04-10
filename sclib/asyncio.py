@@ -6,6 +6,7 @@ import random
 import re
 import aiohttp
 import asyncio
+import itertools
 from . import sync, util
 
 async def get_resource(url) -> bytes:
@@ -86,13 +87,16 @@ class SoundcloudAPI(sync.SoundcloudAPI):
     async def get_tracks(self, *track_ids):
         if not self.client_id:
             await self.get_credentials()
-        url = 'https://api-v2.soundcloud.com/tracks?ids={track_ids}&client_id={client_id}'.format(
-            track_ids=','.join([str(i) for i in track_ids]),
-            client_id=self.client_id
-        )
-        tracks = await get_obj_from(url)
-        if len(tracks) > 1:
-            tracks = sorted(tracks, key=lambda x: track_ids.index(x['id']))
+
+        loop = asyncio.get_event_loop()
+        tasks = []
+        for url in self._format_get_tracks_urls(track_ids):
+            task = loop.create_task(get_obj_from(url))
+            tasks.append(task)
+
+        response = await asyncio.gather(*tasks)
+        tracks = list(itertools.chain.from_iterable(response))
+        tracks = sorted(tracks, key=lambda x: track_ids.index(x['id']))
         return tracks
 
 
