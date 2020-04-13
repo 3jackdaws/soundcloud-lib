@@ -4,6 +4,8 @@ from . import util
 import random
 import io
 import mutagen
+from concurrent import futures
+
 
 def get_url(url):
     return urlopen(url).read()
@@ -32,6 +34,8 @@ class SoundcloudAPI:
     STREAM_URL  = "https://api.soundcloud.com/i1/tracks/{track_id}/streams?client_id={client_id}"
     TRACKS_URL  = "https://api-v2.soundcloud.com/tracks?ids={track_ids}&client_id={client_id}"
     PROGRESSIVE_URL = "https://api-v2.soundcloud.com/media/soundcloud:tracks:723290971/53dc4e74-0414-4ab8-8741-a07ac56c787f/stream/progressive?client_id={client_id}"
+
+    TRACK_API_MAX_REQUEST_SIZE = 50
 
     def __init__(self, client_id=None):
         if client_id:
@@ -64,12 +68,30 @@ class SoundcloudAPI:
             playlist.clean_attributes()
             return playlist
 
+    def _format_get_tracks_urls(self, track_ids):
+        urls = []
+        for start_offset in range(0, len(track_ids), self.TRACK_API_MAX_REQUEST_SIZE):
+            end_offset = start_offset + self.TRACK_API_MAX_REQUEST_SIZE
+            track_ids_slice = track_ids[start_offset:end_offset]
+            url = self.TRACKS_URL.format(
+                track_ids=','.join([str(i) for i in track_ids_slice]),
+                client_id=self.client_id
+            )
+            urls.append(url)
+        return urls
+
     def get_tracks(self, *track_ids):
-        url = self.TRACKS_URL.format(
-            track_ids=','.join([str(i) for i in track_ids]),
-            client_id=self.client_id
-        )
-        tracks = get_obj_from(url)
+        threads = []
+        with futures.ThreadPoolExecutor() as executor:
+            for url in self._format_get_tracks_urls(track_ids):
+                thread = executor.submit(get_obj_from, url)
+                threads.append(thread)
+
+        tracks = []
+        for thread in futures.as_completed(threads):
+            result = thread.result()
+            tracks.extend(result)
+
         tracks = sorted(tracks, key=lambda x: track_ids.index(x['id']))
         return tracks
 
