@@ -108,6 +108,7 @@ for track_number, track in enumerate(playlist):
 # Known Bugs
 
 ### This library cannot download tracks that are not marked "Downloadable". 
+"Downloadable" tracks have an MP3 representation while non-"Downloadable" ones only have HLS representations.  I would like to add HLS assembly to this library in the future.
 
 
 # Bugs or Features
