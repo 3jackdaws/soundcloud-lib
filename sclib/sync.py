@@ -47,9 +47,12 @@ class SoundcloudAPI:
     def get_credentials(self):
         url = random.choice(util.SCRAPE_URLS)
         page_text = get_page(url)
-        script_url = util.find_script_url(page_text)
-        script_text = get_page(script_url)
-        self.client_id = util.find_client_id(script_text)
+        script_urls = util.find_script_urls(page_text)
+        for script in script_urls:
+            if not self.client_id:
+                if type(script) is str and not "":
+                    js_text = f'{get_page(script)}'
+                    self.client_id = util.find_client_id(js_text)
 
     def resolve(self, url):
         if not self.client_id:
