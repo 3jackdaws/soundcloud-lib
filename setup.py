@@ -7,7 +7,7 @@ except:
 
 setup(
     name='soundcloud-lib',
-    version='0.5.1',
+    version='0.5.4',
     description='Python Soundcloud API',
     long_description=long_description,
     long_description_content_type='text/markdown',

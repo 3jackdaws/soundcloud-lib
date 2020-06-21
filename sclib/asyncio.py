@@ -20,9 +20,11 @@ async def get_resource(url) -> bytes:
 async def fetch_soundcloud_client_id():
     url = random.choice(util.SCRAPE_URLS)
     page_text = await get_resource(url)
-    script_url = util.find_script_url(page_text.decode())
-    script_text = await get_resource(script_url)
-    return util.find_client_id(script_text.decode())
+    script_urls = util.find_script_urls(page_text.decode())
+    results = await asyncio.gather(*[get_resource(u) for u in script_urls])
+    script_text = "".join([r.decode() for r in results])
+    print(script_text)
+    return util.find_client_id(script_text)
 
 __all__ = [
     "Track",
