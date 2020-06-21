@@ -108,17 +108,17 @@ async def test_fetch_track_by_id_in_order(api:SoundcloudAPI):
     actual = [t['id'] for t in tracks]
     assert EXPECTED == actual
 
-@pytest.mark.asyncio
-async def test_recognize_edge_case_urls(api:SoundcloudAPI):
-    urls = [
-        'https://soundcloud.com/nittigritti/lights-nitti-gritti-remix-1'
-    ]
-    for url in urls:
-        track = await api.resolve(url)
-        file = BytesIO()
-        size = file.__sizeof__()
-        await track.write_mp3_to(file)
-        assert file.__sizeof__() > size
+# @pytest.mark.asyncio
+# async def test_recognize_edge_case_urls(api:SoundcloudAPI):
+#     urls = [
+#         'https://soundcloud.com/nittigritti/lights-nitti-gritti-remix-1'
+#     ]
+#     for url in urls:
+#         track = await api.resolve(url)
+#         file = BytesIO()
+#         size = file.__sizeof__()
+#         await track.write_mp3_to(file)
+#         assert file.__sizeof__() > size
 
 @pytest.mark.asyncio
 async def test_playlist_resolving(api:SoundcloudAPI):

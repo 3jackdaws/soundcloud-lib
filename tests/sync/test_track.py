@@ -115,16 +115,16 @@ def test_fetch_track_by_id_in_order(api:SoundcloudAPI):
 
 
 
-def test_recognize_edge_case_urls(api:SoundcloudAPI):
-    urls = [
-        'https://soundcloud.com/nittigritti/lights-nitti-gritti-remix-1'
-    ]
-    for url in urls:
-        track = api.resolve(url)
-        file = BytesIO()
-        size = file.__sizeof__()
-        track.write_mp3_to(file)
-        assert file.__sizeof__() > size
+# def test_recognize_edge_case_urls(api:SoundcloudAPI):
+#     urls = [
+#         'https://soundcloud.com/nittigritti/lights-nitti-gritti-remix-1'
+#     ]
+#     for url in urls:
+#         track = api.resolve(url)
+#         file = BytesIO()
+#         size = file.__sizeof__()
+#         track.write_mp3_to(file)
+#         assert file.__sizeof__() > size
 
 
 
