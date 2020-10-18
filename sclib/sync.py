@@ -5,10 +5,18 @@ import random
 import io
 import mutagen
 from concurrent import futures
+from ssl import SSLContext
 
+ssl_verify=True
+
+def get_ssl_setting():
+    if ssl_verify:
+        return None
+    else:
+        return SSLContext()
 
 def get_url(url):
-    return urlopen(url).read()
+    return urlopen(url,context=get_ssl_setting()).read()
 
 def get_page(url):
     return get_url(url).decode('utf-8')
@@ -185,7 +193,7 @@ class Track:
         try:
             fp.seek(0)
             stream_url = self.get_stream_url()
-            fp.write(urlopen(stream_url).read())
+            fp.write(urlopen(stream_url,context=get_ssl_setting()).read())
             fp.seek(0)
 
             album_artwork = None
@@ -193,7 +201,7 @@ class Track:
                 album_artwork = urlopen(
                     util.get_large_artwork_url(
                         self.artwork_url
-                    )
+                    ),context=get_ssl_setting()
                 ).read()
 
             self.write_track_id3(fp, album_artwork)
