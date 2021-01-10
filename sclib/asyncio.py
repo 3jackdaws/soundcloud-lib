@@ -23,7 +23,7 @@ async def fetch_soundcloud_client_id():
     script_urls = util.find_script_urls(page_text.decode())
     results = await asyncio.gather(*[get_resource(u) for u in script_urls])
     script_text = "".join([r.decode() for r in results])
-    print(script_text)
+    #print(script_text)
     return util.find_client_id(script_text)
 
 __all__ = [
