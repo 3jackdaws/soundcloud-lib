@@ -16,7 +16,8 @@ def find_script_urls(html_text):
     scripts_list = []
     for script in scripts:
         src = script['src']
-        scripts_list.append(src)
+        if 'cookielaw.org' not in src:  # filter out cookielaw.org
+            scripts_list.append(src)
     return scripts_list
 
 
