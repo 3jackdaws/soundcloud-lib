@@ -1,39 +1,47 @@
+""" Soundcloud api sync objects """
 from urllib.request import urlopen
 import json
-from . import util
 import random
-import io
-import mutagen
-from concurrent import futures
 from ssl import SSLContext
+from concurrent import futures
+import mutagen
+from . import util
 
-ssl_verify=True
+
+SSL_VERIFY=True
 
 def get_ssl_setting():
-    if ssl_verify:
+    """ Get ssl context """
+    if SSL_VERIFY:
         return None
-    else:
-        return SSLContext()
+    return SSLContext()
 
 def get_url(url):
-    return urlopen(url,context=get_ssl_setting()).read()
+    """ Get url """
+    with urlopen(url, context=get_ssl_setting()) as client:
+        text = client.read()
+    return text
 
 def get_page(url):
+    """ get text from url """
     return get_url(url).decode('utf-8')
 
 def get_obj_from(url):
+    """ Get object from url """
     try:
         return json.loads(get_page(url))
-    except Exception as e:
-        util.eprint(type(e), str(e))
+    except Exception as exc:  # pylint: disable=broad-except
+        util.eprint(type(exc), str(exc))
         return False
 
 
-class UnsupportedFormatError(Exception): pass
+class UnsupportedFormatError(Exception):
+    """ unsupported format """
 
 
 
 class SoundcloudAPI:
+    """ Soundcloud api client """
     __slots__ = [
         'client_id',
     ]
@@ -53,16 +61,18 @@ class SoundcloudAPI:
 
 
     def get_credentials(self):
+        """ get creds """
         url = random.choice(util.SCRAPE_URLS)
         page_text = get_page(url)
         script_urls = util.find_script_urls(page_text)
         for script in script_urls:
             if not self.client_id:
-                if type(script) is str and not "":
+                if type(script) is str and not "":  # pylint: disable=simplifiable-condition
                     js_text = f'{get_page(script)}'
                     self.client_id = util.find_client_id(js_text)
 
     def resolve(self, url):
+        """ Resolve url """
         if not self.client_id:
             self.get_credentials()
         url = SoundcloudAPI.RESOLVE_URL.format(
@@ -71,13 +81,13 @@ class SoundcloudAPI:
         )
 
         obj = get_obj_from(url)
-        # print(json.dumps(obj, indent=2))  # TODO: remove
         if obj['kind'] == 'track':
             return Track(obj=obj, client=self)
-        elif obj['kind'] == 'playlist':
+        if obj['kind'] == 'playlist':
             playlist = Playlist(obj=obj, client=self)
             playlist.clean_attributes()
             return playlist
+        return None
 
     def _format_get_tracks_urls(self, track_ids):
         urls = []
@@ -92,6 +102,7 @@ class SoundcloudAPI:
         return urls
 
     def get_tracks(self, *track_ids):
+        """ Get a list of track ids """
         threads = []
         with futures.ThreadPoolExecutor() as executor:
             for url in self._format_get_tracks_urls(track_ids):
@@ -108,6 +119,7 @@ class SoundcloudAPI:
 
 
 class Track:
+    """ Track object """
     __slots__ = [
         # Track Attributes
         "artwork_url",
@@ -175,9 +187,11 @@ class Track:
             self.__setattr__(key, obj[key] if key in obj else None)
 
         self.client = client
+        self.ready = False
         self.clean_attributes()
 
     def clean_attributes(self):
+        """ clean attrs """
         username = self.user['username']
         title = self.title
         if " - " in title:
@@ -189,28 +203,29 @@ class Track:
 #
 #   Uses urllib
 #
-    def write_mp3_to(self, fp):
+    def write_mp3_to(self, file):
+        """ Write mp3 data to file """
         try:
-            fp.seek(0)
+            file.seek(0)
             stream_url = self.get_stream_url()
-            fp.write(urlopen(stream_url,context=get_ssl_setting()).read())
-            fp.seek(0)
+            with urlopen(stream_url,context=get_ssl_setting()) as client:
+                data = client.read()
+            file.write(data)
+            file.seek(0)
 
             album_artwork = None
             if self.artwork_url:
-                album_artwork = urlopen(
-                    util.get_large_artwork_url(
-                        self.artwork_url
-                    ),context=get_ssl_setting()
-                ).read()
+                with urlopen(util.get_large_artwork_url(self.artwork_url),context=get_ssl_setting()) as client:
+                    album_artwork = client.read()
 
-            self.write_track_id3(fp, album_artwork)
-        except (TypeError, ValueError) as e:
+            self.write_track_id3(file, album_artwork)
+        except (TypeError, ValueError) as exc:
             util.eprint('File object passed to "write_mp3_to" must be opened in read/write binary ("wb+") mode')
-            util.eprint(e)
-            raise e
+            util.eprint(exc)
+            raise exc
 
     def get_prog_url(self):
+        """ Get url """
         for transcode in self.media['transcodings']:
             if transcode['format']['protocol'] == 'progressive':
                 return transcode['url'] + "?client_id=" + self.client.client_id
@@ -219,11 +234,13 @@ class Track:
 #   Uses urllib
 #
     def get_stream_url(self):
+        """ Get stream url """
         prog_url = self.get_prog_url()
         url_response = get_obj_from(prog_url)
         return url_response['url']
 
     def write_track_id3(self, track_fp, album_artwork:bytes = None):
+        """ Write track meta """
         try:
             audio = mutagen.File(track_fp, filename="x.mp3")
             audio.add_tags()
@@ -254,7 +271,7 @@ class Track:
                         encoding=3,
                         mime='image/jpeg',
                         type=3,
-                        desc=u'Cover',
+                        desc='Cover',
                         data=album_artwork
                     )
                 )
@@ -262,13 +279,14 @@ class Track:
             self.ready = True
             track_fp.seek(0)
             return track_fp
-        except (TypeError, ValueError) as e:
+        except (TypeError, ValueError) as exc:
             util.eprint('File object passed to "write_track_metadata" must be opened in read/write binary ("wb+") mode')
-            raise e
+            raise exc
 
 
 
 class Playlist:
+    """ Playlist """
     __slots__ = [
         "artwork_url",
         "created_at",
@@ -312,11 +330,14 @@ class Playlist:
     def __init__(self, *, obj=None, client=None):
         assert obj
         assert "id" in obj
+        self.tracks = []
         for key in self.__slots__:
             self.__setattr__(key, obj[key] if key in obj else None)
         self.client = client
+        self.ready = False
 
     def clean_attributes(self):
+        """ Clean attributes """
         if self.ready:
             return
         self.ready = True

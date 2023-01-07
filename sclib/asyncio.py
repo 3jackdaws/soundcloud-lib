@@ -1,15 +1,17 @@
-import json
-import mutagen
+""" Asyncio """
+
 import sys
-from bs4 import BeautifulSoup
 import random
-import re
-import aiohttp
-import asyncio
+import json
 import itertools
+import asyncio
+import aiohttp
+import mutagen
+
 from . import sync, util
 
 async def get_resource(url) -> bytes:
+    """ Get a resource based on url """
     async with aiohttp.ClientSession() as session:
         async with session as conn:
             async with conn.request('GET', url) as request:
@@ -18,12 +20,12 @@ async def get_resource(url) -> bytes:
 
 
 async def fetch_soundcloud_client_id():
+    """ Get soundlcoud client id """
     url = random.choice(util.SCRAPE_URLS)
     page_text = await get_resource(url)
     script_urls = util.find_script_urls(page_text.decode())
     results = await asyncio.gather(*[get_resource(u) for u in script_urls])
     script_text = "".join([r.decode() for r in results])
-    #print(script_text)
     return util.find_client_id(script_text)
 
 __all__ = [
@@ -33,26 +35,29 @@ __all__ = [
 ]
 
 def eprint(*values, **kwargs):
+    """ Stderr print """
     print(*values, file=sys.stderr, **kwargs)
 
 async def get_obj_from(url):
+    """ Get a json object from a url """
     try:
         return json.loads(await get_resource(url))
-    except Exception as e:
-        eprint(type(e), str(e))
+    except Exception as exc:  # pylint: disable=broad-except
+        eprint(type(exc), str(exc))
         return False
 
 
 
 
 async def embed_artwork(audio:mutagen.File, artwork_url):
+    """ Embed an artwork image into a mp3 """
     if artwork_url:
         audio.tags.add(
             mutagen.id3.APIC(
                 encoding=3,
                 mime='image/jpeg',
                 type=3,
-                desc=u'Cover',
+                desc='Cover',
                 data=await get_resource(artwork_url)
             )
         )
@@ -61,8 +66,10 @@ async def embed_artwork(audio:mutagen.File, artwork_url):
 
 
 class SoundcloudAPI(sync.SoundcloudAPI):
+    """ Asynchronous Soundcloud API Client """
 
-    async def get_credentials(self):
+    async def get_credentials(self):  # pylint: disable=invalid-overridden-method)
+        """ Find api credentials  """
         self.client_id = await fetch_soundcloud_client_id()
         if self.client_id is None:
             raise RuntimeError(
@@ -71,22 +78,22 @@ class SoundcloudAPI(sync.SoundcloudAPI):
                 'Please report this to the package author.'
             )
 
-    async def resolve(self, url):
+    async def resolve(self, url):  # pylint: disable=invalid-overridden-method
+        """ Resolve an api url to a soundcloud object """
         if not self.client_id:
             await self.get_credentials()
-        full_url = "https://api-v2.soundcloud.com/resolve?url={url}&client_id={client_id}&app_version=1499347238".format(
-            url=url,
-            client_id=self.client_id
-        )
+        full_url = f"https://api-v2.soundcloud.com/resolve?url={url}&client_id={self.client_id}&app_version=1499347238"
         obj = await get_obj_from(full_url)
         if obj['kind'] == 'track':
             return Track(obj=obj, client=self)
-        elif obj['kind'] == 'playlist':
+
+        if obj['kind'] == 'playlist':
             playlist = Playlist(obj=obj, client=self)
             await playlist.clean_attributes()
             return playlist
 
-    async def get_tracks(self, *track_ids):
+    async def get_tracks(self, *track_ids):  # pylint: disable=invalid-overridden-method
+        """ Get a list of tracks from a list of ids """
         if not self.client_id:
             await self.get_credentials()
 
@@ -102,17 +109,17 @@ class SoundcloudAPI(sync.SoundcloudAPI):
         return tracks
 
 
-
-
 class Track(sync.Track):
+    """ Asynchronous track object """
 
-    async def write_mp3_to(self, fp):
+    async def write_mp3_to(self, file):  # pylint: disable=invalid-overridden-method)
+        """ Write the mp3 representation of this track to a file object """
         try:
-            fp.seek(0)
+            file.seek(0)
             stream_url = await self.get_stream_url()
             track_mp3_bytes = await get_resource(stream_url)
-            fp.write(track_mp3_bytes)
-            fp.seek(0)
+            file.write(track_mp3_bytes)
+            file.seek(0)
 
             album_artwork = None
             if self.artwork_url:
@@ -122,37 +129,40 @@ class Track(sync.Track):
                     )
                 )
 
-            self.write_track_id3(fp, album_artwork)
-        except (TypeError, ValueError) as e:
+            self.write_track_id3(file, album_artwork)
+        except (TypeError, ValueError) as exc:
             util.eprint('File object passed to "write_mp3_to" must be opened in read/write binary ("wb+") mode')
-            util.eprint(e)
-            raise e
+            util.eprint(exc)
+            raise exc
 
-    async def get_stream_url(self):
+    async def get_stream_url(self):  # pylint: disable=invalid-overridden-method
+        """ get the stream url for this track """
         prog_url = self.get_prog_url()
         stream_response = await get_obj_from(prog_url)
         try:
             return stream_response['url']
-        except Exception as e:
-            eprint(e)
+        except Exception as exc:  # pylint: disable=broad-except)
+            eprint(exc)
             return None
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """ Conver this track object to a dict """
         ignore_attributes = ['client', 'ready']
         track_dict = {}
         for attr in set(self.__slots__):
             if attr not in ignore_attributes:
-                track_dict[attr] = self.__getattribute__(attr)
+                track_dict[attr] = getattr(self, attr)
 
         return track_dict
 
 
 
 class Playlist(sync.Playlist):
+    """ Playlist """
 
     RESOLVE_THRESHOLD = 100
 
-    async def clean_attributes(self):
+    async def clean_attributes(self): # pylint: disable=invalid-overridden-method
         if self.ready:
             return
         self.ready = True
@@ -184,10 +194,11 @@ class Playlist(sync.Playlist):
             yield track
 
     def to_dict(self):
+        """ convert this object to a dict """
         ignore_attributes = ['client', 'ready']
         playlist_dict = {}
         for attr in set(self.__slots__):
             if attr not in ignore_attributes:
-                playlist_dict[attr] = self.__getattribute__(attr)
+                playlist_dict[attr] = getattr(attr)
 
         return playlist_dict

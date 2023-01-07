@@ -1,22 +1,17 @@
+""" Test basic api """
+
 import pytest
-from sclib import SoundcloudAPI, Track
-
-CLIENT_ID= None
-
-@pytest.fixture(scope='session')
-def api():
-    global CLIENT_ID
-    if CLIENT_ID:
-        return SoundcloudAPI(CLIENT_ID)
-    else:
-        sc = SoundcloudAPI()
-        sc.get_credentials()
-        CLIENT_ID = sc.client_id
-        return sc
-
-def test_fetch_client_id(api):
-    assert api.client_id is not None
-    assert len(api.client_id) > 10
+from sclib import SoundcloudAPI
 
 
+@pytest.fixture(scope='session', name="sync_api")
+def sc_client():
+    """ SC Client """
+    api = SoundcloudAPI()
+    api.get_credentials()
+    return api
 
+def test_fetch_client_id(sync_api: SoundcloudAPI):
+    """ Test client id can be fetched """
+    assert sync_api.client_id is not None
+    assert len(sync_api.client_id) > 10

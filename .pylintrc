@@ -1,0 +1,3 @@
+[MESSAGES CONTROL]
+
+disable=line-too-long,R0801,unidiomatic-typecheck,no-member,access-member-before-definition

@@ -35,8 +35,8 @@ assert type(track) is Track
 
 filename = f'./{track.artist} - {track.title}.mp3'
 
-with open(filename, 'wb+') as fp:
-    track.write_mp3_to(fp)
+with open(filename, 'wb+') as file:
+    track.write_mp3_to(file)
 
 ```
 
@@ -53,8 +53,8 @@ assert type(playlist) is Playlist
 
 for track in playlist.tracks:
     filename = f'./{track.artist} - {track.title}.mp3'
-    with open(filename, 'wb+') as fp:
-        track.write_mp3_to(fp)
+    with open(filename, 'wb+') as file:
+        track.write_mp3_to(file)
 
 ```
 
@@ -69,8 +69,8 @@ assert type(track) is Track
 
 filename = f'{track.artist} - {track.title}.mp3'
 
-with open(filename, 'wb+') as fp:
-    await track.write_mp3_to(fp)
+with open(filename, 'wb+') as file:
+    await track.write_mp3_to(file)
 
 ```
 
@@ -86,8 +86,8 @@ assert type(playlist) is Playlist
 
 for track in playlist.tracks:
     filename = f'./{track.artist} - {track.title}.mp3'
-    with open(filename, 'wb+') as fp:
-        await track.write_mp3_to(fp)
+    with open(filename, 'wb+') as file:
+        await track.write_mp3_to(file)
 
 ```
 
