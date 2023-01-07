@@ -1,16 +1,14 @@
 # Soundcloud-lib
-This is a Soundcloud API library that doesn't require a client ID to function.  It's basic, it can really only fetch tracks and playlists, but doesn't require the user to go through the soundcloud app approval process.
+This Soundcloud API doesn't require a user-provided client ID to function.    
 
 ![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
 
-# Why
-I once applied for API access and was approved.  I used this access for months until it was revoked for some reason and all my emails and new applications were ignored.  I decided to create a library that allows me to do Soundcloud API stuff without an approved application.
-
 # Features
-* Supports asyncio
-* Does not require a client ID
+* Can resolve tracks and playlists from URLs
+* Can download and write the MP3 representation of a Track to a file
 * Fetches and writes mp3 metadata (Album artist, title, artwork)
 * Can fetch entire playlists of tracks
+* Asyncio support through `sclib.asyncio`
 
 # Installation
 This library is installable as a pip package.
@@ -19,15 +17,15 @@ pip install soundcloud-lib
 ```
 
 # How
-This library uses **programming** and **algorithms** to find a client ID that can be used to access the Soundcloud API.
+This library scrapes a client id from public Soundcloud pages and uses it to access their API. 
 
 ## Saving an mp3 to a file.
 This will write the ID3 tags for album artist, track title AND will embed the album artwork into the mp3.
 ```python
 from sclib import SoundcloudAPI, Track, Playlist
 
-api = SoundcloudAPI()  # never pass a Soundcloud client ID that did not come from this library
-
+# do not pass a Soundcloud client ID that did not come from this library, but you can save a client_id that this lib found and reuse it
+api = SoundcloudAPI()  
 track = api.resolve('https://soundcloud.com/itsmeneedle/sunday-morning')
 
 assert type(track) is Track
@@ -104,7 +102,7 @@ for track_number, track in enumerate(playlist):
 ```
 
 
-# Known Bugs
+# Known Limitations
 
 ### This library cannot download tracks that are not marked "Downloadable". 
 "Downloadable" tracks have an MP3 representation while non-"Downloadable" ones only have HLS representations.  I would like to add HLS assembly to this library in the future.
@@ -119,4 +117,4 @@ Feel free to request new features too.
 # Contributing
 Please feel free to submit a PR with your changes.
 PRs will only be accepted after a passing build.
-You can make sure your changes pass by running `make lint` and `make test` locally without errors.
+You can make sure your changes pass the build stage by running `make lint` and `make test` locally without errors.  Code should be 10/10 quality for linting and all tests should pass.
