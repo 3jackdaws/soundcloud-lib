@@ -1,9 +1,8 @@
 # Soundcloud-lib
 This is a Soundcloud API library that doesn't require a client ID to function.  It's basic, it can really only fetch tracks and playlists, but doesn't require the user to go through the soundcloud app approval process.
 
-![Version](https://img.shields.io/badge/version-0.5.4-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
 
-### Now works again! Soundcloud please stop changing how your site works :)
 # Why
 I once applied for API access and was approved.  I used this access for months until it was revoked for some reason and all my emails and new applications were ignored.  I decided to create a library that allows me to do Soundcloud API stuff without an approved application.
 
@@ -118,4 +117,6 @@ Feel free to request new features too.
 
 
 # Contributing
-Sure, submit a pull request.
+Please feel free to submit a PR with your changes.
+PRs will only be accepted after a passing build.
+You can make sure your changes pass by running `make lint` and `make test` locally without errors.
