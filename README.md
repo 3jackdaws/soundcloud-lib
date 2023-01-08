@@ -1,5 +1,5 @@
 # Soundcloud-lib
-This Soundcloud API doesn't require a user-provided client ID to function.    
+This Soundcloud API doesn't require a user-provided client ID to function because it scrapes one from public soundcloud pages.  
 
 ![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
 
@@ -15,9 +15,6 @@ This library is installable as a pip package.
 ```
 pip install soundcloud-lib
 ```
-
-# How
-This library scrapes a client id from public Soundcloud pages and uses it to access their API. 
 
 ## Saving an mp3 to a file.
 This will write the ID3 tags for album artist, track title AND will embed the album artwork into the mp3.
