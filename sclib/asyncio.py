@@ -87,7 +87,7 @@ class SoundcloudAPI(sync.SoundcloudAPI):
         if obj['kind'] == 'track':
             return Track(obj=obj, client=self)
 
-        if obj['kind'] == 'playlist':
+        if obj['kind'] in ('playlist', 'system-playlist'):
             playlist = Playlist(obj=obj, client=self)
             await playlist.clean_attributes()
             return playlist
