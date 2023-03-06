@@ -184,10 +184,6 @@ class Playlist(sync.Playlist):
             if track not in self.tracks:
                 self.tracks.append(track)
 
-
-    def __len__(self):
-        return int(self.track_count)
-
     async def __aiter__(self):
         await self.clean_attributes()
         for track in self.tracks:

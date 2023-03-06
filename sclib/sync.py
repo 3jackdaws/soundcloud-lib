@@ -356,7 +356,7 @@ class Playlist:
         self.tracks = track_objects
 
     def __len__(self):
-        return int(self.track_count)
+        return len(self.tracks)
 
     def __iter__(self):
         self.clean_attributes()
