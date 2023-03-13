@@ -83,7 +83,7 @@ class SoundcloudAPI:
         obj = get_obj_from(url)
         if obj['kind'] == 'track':
             return Track(obj=obj, client=self)
-        if obj['kind'] == 'playlist':
+        if obj['kind'] in ('playlist', 'system-playlist'):
             playlist = Playlist(obj=obj, client=self)
             playlist.clean_attributes()
             return playlist
@@ -356,7 +356,7 @@ class Playlist:
         self.tracks = track_objects
 
     def __len__(self):
-        return int(self.track_count)
+        return len(self.tracks)
 
     def __iter__(self):
         self.clean_attributes()

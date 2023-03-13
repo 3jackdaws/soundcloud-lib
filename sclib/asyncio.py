@@ -87,7 +87,7 @@ class SoundcloudAPI(sync.SoundcloudAPI):
         if obj['kind'] == 'track':
             return Track(obj=obj, client=self)
 
-        if obj['kind'] == 'playlist':
+        if obj['kind'] in ('playlist', 'system-playlist'):
             playlist = Playlist(obj=obj, client=self)
             await playlist.clean_attributes()
             return playlist
@@ -183,10 +183,6 @@ class Playlist(sync.Playlist):
         for track in track_objects:
             if track not in self.tracks:
                 self.tracks.append(track)
-
-
-    def __len__(self):
-        return int(self.track_count)
 
     async def __aiter__(self):
         await self.clean_attributes()

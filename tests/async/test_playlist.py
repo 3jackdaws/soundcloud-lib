@@ -1,23 +1,35 @@
 """
-Test async playlist
+Test async playlists
 """
-import pytest_asyncio
+import pytest
 
-from sclib.asyncio import SoundcloudAPI, Playlist
+from sclib.asyncio import SoundcloudAPI
 
-PLAYLIST_URL = 'https://soundcloud.com/soundcloud-circuits/sets/web-tempo-future-dance-and-electronic'
-TEST_PLAYLIST = None
+pytest_plugins = ('pytest_asyncio',)
 
 
-@pytest_asyncio.fixture(name='test_playlist')
-async def playlist_fixture():
+@pytest.fixture(name='sclib')
+def sclib_fixture():
     """ Ex playlist """
-    return await SoundcloudAPI().resolve(PLAYLIST_URL)
+    return SoundcloudAPI()
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("playlist_url", [
+    "https://soundcloud.com/soundcloud-circuits/sets/web-tempo-future-dance-and-electronic",
+    "https://soundcloud.com/discover/sets/artist-stations:127466931",
+])
+async def test_playlist_is_resolved(sclib: SoundcloudAPI, playlist_url: str):
+    """ Test async playlist is resolved """
+    await sclib.resolve(playlist_url)
 
-def test_playlist_size(test_playlist: Playlist):
-    """ Test async playlist size """
-    assert len(test_playlist) > 0
-    test_playlist.clean_attributes()
-    assert len(test_playlist) == len(test_playlist.tracks)
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("playlist_url,expected_playlist_kind", [
+    ("https://soundcloud.com/soundcloud-circuits/sets/web-tempo-future-dance-and-electronic", "playlist"),
+    ("https://soundcloud.com/discover/sets/artist-stations:127466931", "system-playlist"),
+])
+async def test_playlist_type(sclib: SoundcloudAPI, playlist_url: str, expected_playlist_kind: str):
+    """ Test async playlist type """
+    test_playlist = await sclib.resolve(playlist_url)
+    assert test_playlist.kind == expected_playlist_kind
