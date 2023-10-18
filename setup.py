@@ -8,7 +8,6 @@ except:
 
 requirements = [
     'mutagen',
-    'bs4',
     'aiohttp'
 ]
 
