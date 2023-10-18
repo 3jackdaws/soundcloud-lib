@@ -1,5 +1,4 @@
 mutagen
-bs4
 aiohttp
 
 pytest
