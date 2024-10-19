@@ -2,6 +2,8 @@
 from urllib.request import urlopen
 import json
 import random
+import re
+import requests
 from ssl import SSLContext
 from concurrent import futures
 import mutagen
@@ -75,6 +77,10 @@ class SoundcloudAPI:
         """ Resolve url """
         if not self.client_id:
             self.get_credentials()
+
+        if not re.match(util.SC_TRACK_RESOLVE_REGEX, url):
+            url = requests.get(url).url
+        
         url = SoundcloudAPI.RESOLVE_URL.format(
             url=url,
             client_id=self.client_id
