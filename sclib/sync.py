@@ -3,9 +3,9 @@ from urllib.request import urlopen
 import json
 import random
 import re
-import requests
 from ssl import SSLContext
 from concurrent import futures
+import requests
 import mutagen
 from . import util
 
@@ -79,8 +79,8 @@ class SoundcloudAPI:
             self.get_credentials()
 
         if not re.match(util.SC_TRACK_RESOLVE_REGEX, url):
-            url = requests.get(url).url
-        
+            url = requests.get(url, timeout=10).url
+
         url = SoundcloudAPI.RESOLVE_URL.format(
             url=url,
             client_id=self.client_id
@@ -366,5 +366,4 @@ class Playlist:
 
     def __iter__(self):
         self.clean_attributes()
-        for track in self.tracks:
-            yield track
+        yield from self.tracks
