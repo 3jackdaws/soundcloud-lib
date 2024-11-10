@@ -1,11 +1,11 @@
 """ Soundcloud api sync objects """
+import urllib.request
 from urllib.request import urlopen
 import json
 import random
 import re
 from ssl import SSLContext
 from concurrent import futures
-import requests
 import mutagen
 from . import util
 
@@ -79,7 +79,8 @@ class SoundcloudAPI:
             self.get_credentials()
 
         if not re.match(util.SC_TRACK_RESOLVE_REGEX, url):
-            url = requests.get(url, timeout=10).url
+            with urllib.request.urlopen(url, timeout=10) as response:
+                url = response.geturl()
 
         url = SoundcloudAPI.RESOLVE_URL.format(
             url=url,
