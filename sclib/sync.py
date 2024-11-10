@@ -51,6 +51,7 @@ class SoundcloudAPI:
     SEARCH_URL  = "https://api-v2.soundcloud.com/search?q={query}&client_id={client_id}&limit={limit}&offset={offset}"
     STREAM_URL  = "https://api.soundcloud.com/i1/tracks/{track_id}/streams?client_id={client_id}"
     TRACKS_URL  = "https://api-v2.soundcloud.com/tracks?ids={track_ids}&client_id={client_id}"
+    LIKES_URL   = "https://api-v2.soundcloud.com/users/{user_id}/likes?limit={limit}&offset={offset}&client_id={client_id}"
     PROGRESSIVE_URL = "https://api-v2.soundcloud.com/media/soundcloud:tracks:723290971/53dc4e74-0414-4ab8-8741-a07ac56c787f/stream/progressive?client_id={client_id}"
 
     TRACK_API_MAX_REQUEST_SIZE = 50
@@ -94,6 +95,8 @@ class SoundcloudAPI:
             playlist = Playlist(obj=obj, client=self)
             playlist.clean_attributes()
             return playlist
+        if obj['kind'] == 'user':
+            return User(obj=obj, client=self)
         return None
 
     def _format_get_tracks_urls(self, track_ids):
@@ -124,6 +127,26 @@ class SoundcloudAPI:
         tracks = sorted(tracks, key=lambda x: track_ids.index(x['id']))
         return tracks
 
+    def get_likes(self, user_id, limit=50, offset=0):
+        """ Get the likes of a user """
+        if not self.client_id:
+            self.get_credentials()
+        url = self.LIKES_URL.format(user_id=user_id, limit=limit, offset=offset, client_id=self.client_id)
+        return get_obj_from(url)
+
+    def get_all_likes(self, user_id):
+        """ Get all likes of a user, handling pagination """
+        likes = []
+        offset = 0
+        while True:
+            response = self.get_likes(user_id, limit=50, offset=offset)
+            if not response:
+                break
+            likes.extend(response['collection'])
+            if not response['next_href']:
+                break
+            offset += 50
+        return likes
 
 class Track:
     """ Track object """
