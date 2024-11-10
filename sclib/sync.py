@@ -1,7 +1,9 @@
 """ Soundcloud api sync objects """
+import urllib.request
 from urllib.request import urlopen
 import json
 import random
+import re
 from ssl import SSLContext
 from concurrent import futures
 import mutagen
@@ -75,6 +77,11 @@ class SoundcloudAPI:
         """ Resolve url """
         if not self.client_id:
             self.get_credentials()
+
+        if not re.match(util.SC_TRACK_RESOLVE_REGEX, url):
+            with urllib.request.urlopen(url, timeout=10) as response:
+                url = response.geturl()
+
         url = SoundcloudAPI.RESOLVE_URL.format(
             url=url,
             client_id=self.client_id
@@ -360,5 +367,4 @@ class Playlist:
 
     def __iter__(self):
         self.clean_attributes()
-        for track in self.tracks:
-            yield track
+        yield from self.tracks

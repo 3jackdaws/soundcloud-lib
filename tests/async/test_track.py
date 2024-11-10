@@ -98,7 +98,7 @@ async def test_track_writes_mp3_metadata(test_track:Track):
 @pytest.mark.asyncio
 async def test_fetch_track_by_id_in_order(async_api: SoundcloudAPI):
     """ Test resolve in order """
-    expected = [222820656, 153576776, 289589592, 268448230]
+    expected = [222820656, 1860005124, 289589592, 268448230]
     tracks = await async_api.get_tracks(*expected)
     actual = [t['id'] for t in tracks]
     assert expected == actual

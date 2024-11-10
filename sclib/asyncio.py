@@ -3,6 +3,7 @@
 import sys
 import random
 import json
+import re
 import itertools
 import asyncio
 import aiohttp
@@ -82,6 +83,12 @@ class SoundcloudAPI(sync.SoundcloudAPI):
         """ Resolve an api url to a soundcloud object """
         if not self.client_id:
             await self.get_credentials()
+
+        if not re.match(util.SC_TRACK_RESOLVE_REGEX, url):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    url = str(response.real_url)
+
         full_url = f"https://api-v2.soundcloud.com/resolve?url={url}&client_id={self.client_id}&app_version=1499347238"
         obj = await get_obj_from(full_url)
         if obj['kind'] == 'track':

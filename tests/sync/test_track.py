@@ -117,7 +117,7 @@ def test_track_writes_mp3_album(sync_api):
 
 def test_fetch_track_by_id_in_order(sync_api: SoundcloudAPI):
     """ Test that multiple track ids fetched at the same time are returned in the correct order """
-    expected = [ 222820656, 153576776, 289589592, 268448230]
+    expected = [ 222820656, 1860005124, 289589592, 268448230]
     tracks = sync_api.get_tracks(*expected)
     actual = [t['id'] for t in tracks]
     assert expected == actual

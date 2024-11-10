@@ -3,6 +3,7 @@ import sys
 import re
 from bs4 import BeautifulSoup
 
+SC_TRACK_RESOLVE_REGEX = r"^(?:https?:\/\/)soundcloud\.com\/[a-z0-9](?!.*?(-|_){2})[\w-]{1,23}[a-z0-9]\/[^\s]+$"
 
 def eprint(*values, **kwargs):
     """ Print to stderr """
