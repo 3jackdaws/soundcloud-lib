@@ -1,9 +1,7 @@
 """ Soundcloud api sync objects """
-import urllib.request
 from urllib.request import urlopen
 import json
 import random
-import re
 from ssl import SSLContext
 from concurrent import futures
 import mutagen
@@ -47,12 +45,13 @@ class SoundcloudAPI:
     __slots__ = [
         'client_id',
     ]
-    RESOLVE_URL = "https://api-v2.soundcloud.com/resolve?url={url}&client_id={client_id}"
-    SEARCH_URL  = "https://api-v2.soundcloud.com/search?q={query}&client_id={client_id}&limit={limit}&offset={offset}"
-    STREAM_URL  = "https://api.soundcloud.com/i1/tracks/{track_id}/streams?client_id={client_id}"
-    TRACKS_URL  = "https://api-v2.soundcloud.com/tracks?ids={track_ids}&client_id={client_id}"
-    PROGRESSIVE_URL = "https://api-v2.soundcloud.com/media/soundcloud:tracks:723290971/53dc4e74-0414-4ab8-8741-a07ac56c787f/stream/progressive?client_id={client_id}"
 
+
+    RESOLVE_URL = "https://api-v2.soundcloud.com/resolve?url={url}&client_id={client_id}"
+    TRACKS_URL = "https://api-v2.soundcloud.com/tracks/soundcloud:tracks:{track_id}?client_id={client_id}"
+    STREAM_URL = "https://api-v2.soundcloud.com/tracks/soundcloud:tracks:{track_id}/stream?client_id={client_id}"
+    PROGRESSIVE_URL = "https://api-v2.soundcloud.com/media/soundcloud:tracks:{track_id}/stream/progressive?client_id={client_id}"
+    SEARCH_URL = "https://api-v2.soundcloud.com/search?q={query}&client_id={client_id}&limit={limit}&offset={offset}"
     TRACK_API_MAX_REQUEST_SIZE = 50
 
     def __init__(self, client_id=None):
@@ -77,11 +76,6 @@ class SoundcloudAPI:
         """ Resolve url """
         if not self.client_id:
             self.get_credentials()
-
-        if not re.match(util.SC_TRACK_RESOLVE_REGEX, url):
-            with urllib.request.urlopen(url, timeout=10) as response:
-                url = response.geturl()
-
         url = SoundcloudAPI.RESOLVE_URL.format(
             url=url,
             client_id=self.client_id
@@ -183,7 +177,7 @@ class Track:
         "client",
         "ready"
     ]
-    STREAM_URL = "https://api.soundcloud.com/i1/tracks/{track_id}/streams?client_id={client_id}"
+    STREAM_URL = "https://api.soundcloud.com/tracks/soundcloud:tracks:{track_id}/streams?client_id={client_id}"
     def __init__(self, *, obj=None, client=None):
         if not obj:
             raise ValueError("[Track]: obj must not be None")
@@ -367,4 +361,5 @@ class Playlist:
 
     def __iter__(self):
         self.clean_attributes()
-        yield from self.tracks
+        for track in self.tracks:
+            yield track
