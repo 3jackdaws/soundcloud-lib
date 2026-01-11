@@ -28,7 +28,7 @@ def find_script_urls(html_text):
 
 def find_client_id(script_text):
     """ Extract client_id from script """
-    client_id = re.findall(r'client_id=([a-zA-Z0-9]+)', script_text)
+    client_id = re.findall(r'client_id[=:][\'"]?([a-zA-Z0-9]{32})[\'"]?', script_text)
     if len(client_id) > 0:
         return client_id[0]
 
