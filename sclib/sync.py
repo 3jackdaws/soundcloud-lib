@@ -20,7 +20,7 @@ def get_ssl_setting():
 
 def get_url(url):
     """ Get url """
-    with urlopen(url, context=get_ssl_setting()) as client:
+    with urlopen(url, context=get_ssl_setting(), timeout=60) as client:
         text = client.read()
     return text
 
@@ -215,14 +215,14 @@ class Track:
         try:
             file.seek(0)
             stream_url = self.get_stream_url()
-            with urlopen(stream_url,context=get_ssl_setting()) as client:
+            with urlopen(stream_url,context=get_ssl_setting(), timeout=60) as client:
                 data = client.read()
             file.write(data)
             file.seek(0)
 
             album_artwork = None
             if self.artwork_url:
-                with urlopen(util.get_large_artwork_url(self.artwork_url),context=get_ssl_setting()) as client:
+                with urlopen(util.get_large_artwork_url(self.artwork_url),context=get_ssl_setting(), timeout=60) as client:
                     album_artwork = client.read()
 
             self.write_track_id3(file, album_artwork)
